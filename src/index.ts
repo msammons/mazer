@@ -147,73 +147,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render maze
   let meshCount = 0;
-  const wallThickness = 0.1;
-  const wallLength = 1;
   const wallHeight = 1.5;
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       const cell = maze.grid[y][x];
-      // For each 'wall' cell, check all four directions and draw a wall segment on every exposed edge
+      // For each 'wall' cell, fill the cell with a solid block
       if (cell === 'wall') {
-        // Use a thin wall thickness for classic look
-        const classicWallThickness = 0.12;
-
-        // Left wall (vertical, at cell boundary)
-        if (x === 0 || maze.grid[y][x-1] !== 'wall') {
-          const lWall = MeshBuilder.CreateBox(`lwall_${x}_${y}`, {
-            width: classicWallThickness,
-            depth: 1.0,
-            height: wallHeight
-          }, scene);
-          lWall.position = new Vector3(x, wallHeight / 2, y + 0.5);
-          const mat = new StandardMaterial(`lwallMat_${x}_${y}`, scene);
-          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          lWall.material = mat;
-          meshCount++;
-        }
-        // Right wall (vertical, at cell boundary)
-        if (x === maze.width - 1 || maze.grid[y][x+1] !== 'wall') {
-          const rWall = MeshBuilder.CreateBox(`rwall_${x}_${y}`, {
-            width: classicWallThickness,
-            depth: 1.0,
-            height: wallHeight
-          }, scene);
-          rWall.position = new Vector3(x + 1, wallHeight / 2, y + 0.5);
-          const mat = new StandardMaterial(`rwallMat_${x}_${y}`, scene);
-          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          rWall.material = mat;
-          meshCount++;
-        }
-        // Top wall (horizontal, at cell boundary)
-        if (y === 0 || maze.grid[y-1][x] !== 'wall') {
-          const tWall = MeshBuilder.CreateBox(`twall_${x}_${y}`, {
-            width: 1.0,
-            depth: classicWallThickness,
-            height: wallHeight
-          }, scene);
-          tWall.position = new Vector3(x + 0.5, wallHeight / 2, y);
-          const mat = new StandardMaterial(`twallMat_${x}_${y}`, scene);
-          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          tWall.material = mat;
-          meshCount++;
-        }
-        // Bottom wall (horizontal, at cell boundary)
-        if (y === maze.height - 1 || maze.grid[y+1][x] !== 'wall') {
-          const bWall = MeshBuilder.CreateBox(`bwall_${x}_${y}`, {
-            width: 1.0,
-            depth: classicWallThickness,
-            height: wallHeight
-          }, scene);
-          bWall.position = new Vector3(x + 0.5, wallHeight / 2, y + 1);
-          const mat = new StandardMaterial(`bwallMat_${x}_${y}`, scene);
-          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          bWall.material = mat;
-          meshCount++;
-        }
+        const wallBlock = MeshBuilder.CreateBox(`wall_${x}_${y}`, {
+          width: 1,
+          depth: 1,
+          height: wallHeight
+        }, scene);
+        wallBlock.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5);
+        const mat = new StandardMaterial(`wallMat_${x}_${y}`, scene);
+        mat.diffuseColor = new Color3(0.1, 0.3, 0.8); // Consistent wall color
+        mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        wallBlock.material = mat;
+        meshCount++;
       } else if (cell === 'fish') {
         const fish = MeshBuilder.CreateSphere(`fish_${x}_${y}`, { diameter: 0.4 }, scene);
         fish.position = new Vector3(x, 0.25, y);
