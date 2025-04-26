@@ -132,54 +132,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render maze
   let meshCount = 0;
+  const wallThickness = 0.1;
+  const wallLength = 1;
+  const wallHeight = 1.5;
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       const cell = maze.grid[y][x];
-      const pos = new Vector3(x, 0, y);
-      if (cell === 'wall') {
-        const wall = MeshBuilder.CreateBox(`wall_${x}_${y}`, { size: 1, height: 1.5 }, scene);
-        wall.position = pos.add(new Vector3(0, 0.75, 0));
-        const mat = new StandardMaterial(`wallMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.1, 0.3, 0.8); // restore blue
-        mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-        wall.material = mat;
-        meshCount++;
+      // Draw vertical wall between (x, y) and (x+1, y) if one is 'wall' and the other is not
+      if (x < maze.width - 1) {
+        const thisIsWall = maze.grid[y][x] === 'wall';
+        const rightIsWall = maze.grid[y][x + 1] === 'wall';
+        if (thisIsWall !== rightIsWall) {
+          const vWall = MeshBuilder.CreateBox(`vwall_${x}_${y}`, { width: wallThickness, depth: wallLength, height: wallHeight }, scene);
+          vWall.position = new Vector3(x + 0.5, wallHeight / 2, y);
+          const mat = new StandardMaterial(`vwallMat_${x}_${y}`, scene);
+          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+          vWall.material = mat;
+          meshCount++;
+        }
+      }
+      // Draw horizontal wall between (x, y) and (x, y+1) if one is 'wall' and the other is not
+      if (y < maze.height - 1) {
+        const thisIsWall = maze.grid[y][x] === 'wall';
+        const downIsWall = maze.grid[y + 1][x] === 'wall';
+        if (thisIsWall !== downIsWall) {
+          const hWall = MeshBuilder.CreateBox(`hwall_${x}_${y}`, { width: wallLength, depth: wallThickness, height: wallHeight }, scene);
+          hWall.position = new Vector3(x, wallHeight / 2, y + 0.5);
+          const mat = new StandardMaterial(`hwallMat_${x}_${y}`, scene);
+          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+          hWall.material = mat;
+          meshCount++;
+        }
       } else if (cell === 'fish') {
         const fish = MeshBuilder.CreateSphere(`fish_${x}_${y}`, { diameter: 0.4 }, scene);
-        fish.position = pos.add(new Vector3(0, 0.25, 0));
+        fish.position = new Vector3(x, 0.25, y);
         const mat = new StandardMaterial(`fishMat_${x}_${y}`, scene);
         mat.diffuseColor = new Color3(0.9, 0.8, 0.2);
         fish.material = mat;
         meshCount++;
       } else if (cell === 'powerup') {
         const powerup = MeshBuilder.CreateSphere(`powerup_${x}_${y}`, { diameter: 0.5 }, scene);
-        powerup.position = pos.add(new Vector3(0, 0.3, 0));
+        powerup.position = new Vector3(x, 0.3, y);
         const mat = new StandardMaterial(`powerupMat_${x}_${y}`, scene);
         mat.diffuseColor = new Color3(0.8, 0.1, 0.7);
         powerup.material = mat;
         meshCount++;
       } else if (cell === 'hazard') {
         const hazard = MeshBuilder.CreateTorus(`hazard_${x}_${y}`, { diameter: 0.6, thickness: 0.15 }, scene);
-        hazard.position = pos.add(new Vector3(0, 0.15, 0));
+        hazard.position = new Vector3(x, 0.15, y);
         const mat = new StandardMaterial(`hazardMat_${x}_${y}`, scene);
         mat.diffuseColor = new Color3(0.1, 0.9, 0.9);
         hazard.material = mat;
         meshCount++;
       } else if (cell === 'shortcut') {
         const shortcut = MeshBuilder.CreateBox(`shortcut_${x}_${y}`, { size: 0.8, height: 0.2 }, scene);
-        shortcut.position = pos.add(new Vector3(0, 0.1, 0));
+        shortcut.position = new Vector3(x, 0.1, y);
         const mat = new StandardMaterial(`shortcutMat_${x}_${y}`, scene);
         mat.diffuseColor = new Color3(0.1, 0.8, 0.2);
         shortcut.material = mat;
         meshCount++;
       } else if (cell === 'spawn') {
         const spawn = MeshBuilder.CreateBox(`spawn_${x}_${y}`, { size: 0.9, height: 0.2 }, scene);
-        spawn.position = pos.add(new Vector3(0, 0.1, 0));
+        spawn.position = new Vector3(x, 0.1, y);
         const mat = new StandardMaterial(`spawnMat_${x}_${y}`, scene);
         mat.diffuseColor = new Color3(1, 1, 1);
         spawn.material = mat;
         meshCount++;
-        console.log(`Created spawn mesh at position ${pos}`);
+        console.log(`Created spawn mesh at position ${x}, ${y}`);
       }
     }
   }
