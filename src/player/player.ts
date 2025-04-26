@@ -3,7 +3,9 @@
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
 export interface Player {
-  position: { x: number; y: number };
+  currentTile: { x: number; y: number };
+  targetTile: { x: number; y: number };
+  progress: number;
   direction: Direction;
   nextDirection: Direction | null;
   lives: number;
@@ -14,7 +16,9 @@ export interface Player {
 
 export function createInitialPlayer(): Player {
   return {
-    position: { x: 1, y: 1 },
+    currentTile: { x: 1, y: 1 },
+    targetTile: { x: 2, y: 1 }, // start moving right
+    progress: 0,
     direction: 'right',
     nextDirection: null,
     lives: 3,
@@ -32,6 +36,9 @@ export interface SimpleVector3 {
 }
 
 export function getPlayerWorldPosition(player: Player): SimpleVector3 {
-  // Converts maze grid position to world coordinates
-  return { x: player.position.x, y: 0.5, z: player.position.y };
+  // Linear interpolate between currentTile and targetTile using progress
+  const x = player.currentTile.x + (player.targetTile.x - player.currentTile.x) * player.progress;
+  const y = 0.5;
+  const z = player.currentTile.y + (player.targetTile.y - player.currentTile.y) * player.progress;
+  return { x, y, z };
 }

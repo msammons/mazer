@@ -2,7 +2,7 @@
 import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4 } from '@babylonjs/core';
 import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
-import { updatePlayerMovement, bufferInput, canMove, isIntersection } from './player/movement';
+import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
 import { isOpposite } from './player/reverse';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,38 +39,61 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       return;
     }
-    // Only process movement keys if not Tab and not when an input field is focused
-    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
-    const key = e.key.toLowerCase();
-    const dir = keyToDir[key] || keyToDir[e.key];
+  });
+
+  // Keyboard input handling (multi-key, arcade-style)
+  const keyToDir: Record<string, Direction> = {
+    ArrowUp: 'up',
+    ArrowDown: 'down',
+    ArrowLeft: 'left',
+    ArrowRight: 'right',
+  };
+
+  // Track all currently held directions in order of most recent press
+  let heldDirections: Direction[] = [];
+
+  function bufferDirectionFromHeld() {
+    if (heldDirections.length > 0) {
+      player.nextDirection = heldDirections[heldDirections.length - 1];
+    } else {
+      player.nextDirection = null;
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const dir = keyToDir[e.key];
     if (dir) {
-      // Instant reversal: if opposite and path is clear, apply immediately
-      if (
-        isOpposite(dir, player.direction) &&
-        canMove(maze, player.position.x, player.position.y, dir)
-      ) {
-        player = bufferInput(player, dir);
-        // Update movement target right away
-        const target = getPlayerWorldPosition(player);
-        sharkTargetPos.x = target.x;
-        sharkTargetPos.z = target.z;
-        bufferedDirection = null;
+      // Remove if already present, then add to end (most recent)
+      heldDirections = heldDirections.filter(d => d !== dir);
+      heldDirections.push(dir);
+      // If instant reversal is possible, do it immediately
+      if (isOpposite(dir, player.direction)) {
+        player = reversePlayerDirection(player);
       } else {
-        bufferedDirection = dir;
+        player.nextDirection = heldDirections[heldDirections.length - 1];
       }
     }
   });
+
+  document.addEventListener('keyup', (e) => {
+    const dir = keyToDir[e.key];
+    if (dir) {
+      heldDirections = heldDirections.filter(d => d !== dir);
+      // Always update buffer to the most recent held key (if any)
+      player.nextDirection = heldDirections.length > 0 ? heldDirections[heldDirections.length - 1] : null;
+    }
+  });
+
   function updateDebugOverlay(meshCount: number, playerPos: {x: number, y: number, z: number}, cameraTarget: Vector3, cameraRadius: number, cameraAlpha?: number, cameraBeta?: number) {
     if (!debugOverlay) return;
     try {
       // Show player grid position and direction
-      const playerGrid = player && player.position ? player.position : { x: '?', y: '?' };
       const playerDir = player && player.direction ? player.direction : '?';
       debugOverlay.innerHTML = `
         <b>Shark Robot Maze Debug</b><br>
         Mesh count: ${meshCount}<br>
         Player pos: (${playerPos.x.toFixed(2)}, ${playerPos.y.toFixed(2)}, ${playerPos.z.toFixed(2)})<br>
-        Player grid: (${playerGrid.x}, ${playerGrid.y}) dir: ${playerDir}<br>
+        Player dir: ${playerDir}<br>
         Camera target: (${cameraTarget.x.toFixed(2)}, ${cameraTarget.y.toFixed(2)}, ${cameraTarget.z.toFixed(2)})<br>
         Camera radius: ${cameraRadius.toFixed(2)}<br>
         Camera alpha: ${cameraAlpha?.toFixed(2)}<br>
@@ -167,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const shark = MeshBuilder.CreateSphere('shark', { diameter: 0.7 }, scene); // original size
   let playerPos = getPlayerWorldPosition(player);
   // Raise Y position above maze floor for visibility
-  shark.position = new Vector3(playerPos.x, 1.1, playerPos.z);
+  shark.position = new Vector3(maze.width - 1 - playerPos.x, 1.1, playerPos.z);
   const sharkMat = new StandardMaterial('sharkMat', scene);
   sharkMat.diffuseColor = new Color3(1, 0.5, 0); // bright orange
   shark.material = sharkMat;
@@ -175,83 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   scene.clearColor = new Color4(0, 0.12, 0.18, 1);
 
-  // Keyboard input
-  const keyToDir: Record<string, Direction> = {
-    arrowup: 'up',
-    w: 'up',
-    arrowdown: 'down',
-    s: 'down',
-    arrowleft: 'left',
-    a: 'left',
-    arrowright: 'right',
-    d: 'right',
-  };
-  window.addEventListener('keydown', (e) => {
-    const key = e.key.toLowerCase();
-    const dir = keyToDir[key] || keyToDir[e.key];
-    if (dir) bufferedDirection = dir;
-  });
-
   // Game loop for player movement
+  const SHARK_SPEED = 4; // tiles/sec
   let lastTime = performance.now();
-  let initialPos = getPlayerWorldPosition(player);
-  let sharkRenderPos = { x: initialPos.x, y: 1.1, z: initialPos.z };
-  let sharkTargetPos = { x: initialPos.x, y: 1.1, z: initialPos.z };
-  let isMoving = false;
   engine.runRenderLoop(() => {
     const now = performance.now();
-    let dt = now - lastTime;
+    const dt = (now - lastTime) / 1000;
     lastTime = now;
-
-    // --- CONTINUOUS, SMOOTH, PAC-MAN STYLE MOVEMENT ---
-    const speed = 0.004; // tiles per ms (about 4 tiles per second)
-    // If shark is at target, try to advance to next cell if possible
-    const dx = sharkTargetPos.x - sharkRenderPos.x;
-    const dz = sharkTargetPos.z - sharkRenderPos.z;
-    const dist = Math.sqrt(dx * dx + dz * dz);
-    // --- Allow instant reversal of direction between grid centers ---
-    if (
-      bufferedDirection &&
-      isOpposite(bufferedDirection, player.direction) &&
-      canMove(maze, player.position.x, player.position.y, bufferedDirection)
-    ) {
-      player = bufferInput(player, bufferedDirection);
-      bufferedDirection = null;
-      // Update new movement target
-      const target = getPlayerWorldPosition(player);
-      sharkTargetPos.x = target.x;
-      sharkTargetPos.z = target.z;
-    }
-
-    if (dist < 0.01) {
-      // At grid center: update player state
-      sharkRenderPos.x = sharkTargetPos.x;
-      sharkRenderPos.z = sharkTargetPos.z;
-
-      // Always buffer the latest direction if set
-      if (bufferedDirection) {
-        player = bufferInput(player, bufferedDirection);
-        bufferedDirection = null;
-      }
-      // Always update movement, even if blocked
-      player = updatePlayerMovement(player, maze);
-      const target = getPlayerWorldPosition(player);
-      sharkTargetPos.x = target.x;
-      sharkTargetPos.z = target.z;
-      // Check if player actually moved
-      isMoving = (player.position.x !== sharkRenderPos.x || player.position.y !== sharkRenderPos.z);
-    
-    } else {
-      isMoving = true;
-      // Move smoothly toward target
-      const moveStep = Math.min(speed * dt, dist);
-      sharkRenderPos.x += (dx / dist) * moveStep;
-      sharkRenderPos.z += (dz / dist) * moveStep;
-    }
-    // Y stays at 1.1
-    shark.position = new Vector3(maze.width - 1 - sharkRenderPos.x, 1.1, sharkRenderPos.z);
-    // Update debug overlay with new player position
-    updateDebugOverlay(meshCount, getPlayerWorldPosition(player), camera.target, camera.radius, camera.alpha, camera.beta);
+    player = updatePlayerMovement(player, maze, dt, SHARK_SPEED);
+    const pos = getPlayerWorldPosition(player);
+    shark.position = new Vector3(maze.width - 1 - pos.x, 1.1, pos.z);
+    updateDebugOverlay(meshCount, pos, camera.target, camera.radius, camera.alpha, camera.beta);
     scene.render();
   });
 
