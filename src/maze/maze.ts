@@ -11,20 +11,26 @@ export interface Maze {
 
 
 export function createSimpleMaze(): Maze {
-  const width = 11;
-  const height = 9;
+  // More complex, classic Pac-Man–like layout
+  // 0 = wall, 1 = empty
+  const layout = [
+    [0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,1,1,0,1,0,1,1,1,0],
+    [0,1,0,1,0,1,0,1,0,1,0],
+    [0,1,0,1,1,1,1,1,0,1,0],
+    [0,1,0,0,0,0,0,0,0,1,0],
+    [0,1,1,1,0,1,0,1,1,1,0],
+    [0,0,0,1,0,1,0,1,0,0,0],
+    [0,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0],
+  ];
+  const width = layout[0].length;
+  const height = layout.length;
   const grid: MazeCell[][] = [];
   for (let y = 0; y < height; y++) {
     const row: MazeCell[] = [];
     for (let x = 0; x < width; x++) {
-      // Borders and center wall as cell occupancy
-      if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-        row.push('wall');
-      } else if (x === 5 && y >= 1 && y <= 7) {
-        row.push('wall'); // center vertical wall
-      } else {
-        row.push('empty');
-      }
+      row.push(layout[y][x] === 0 ? 'wall' : 'empty');
     }
     grid.push(row);
   }

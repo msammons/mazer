@@ -1,7 +1,7 @@
 # Game Requirements Document
 
 ## 1. Core Gameplay
-- The player controls a shark in a 3D top-down maze.
+- The player controls a shark in a 2D maze.
 - The goal is to eat all edible fish scattered throughout the maze.
 - The player is pursued by multiple AI-controlled robots.
 - The game ends when:

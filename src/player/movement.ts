@@ -33,8 +33,8 @@ export function canMove(maze: Maze, x: number, y: number, dir: Direction): boole
   let nx = x, ny = y;
   if (dir === 'up') ny--;
   else if (dir === 'down') ny++;
-  else if (dir === 'left') nx--;
-  else if (dir === 'right') nx++;
+  else if (dir === 'left') nx--; // left = x - 1
+  else if (dir === 'right') nx++; // right = x + 1
   return (
     nx >= 0 &&
     nx < maze.width &&
@@ -78,8 +78,8 @@ export function updatePlayerMovement(player: Player, maze: Maze, dt: number, spe
       let newTargetTile: { x: number; y: number };
       if (chosenDirection === 'up') newTargetTile = { x: newCurrentTile.x, y: newCurrentTile.y - 1 };
       else if (chosenDirection === 'down') newTargetTile = { x: newCurrentTile.x, y: newCurrentTile.y + 1 };
-      else if (chosenDirection === 'left') newTargetTile = { x: newCurrentTile.x - 1, y: newCurrentTile.y };
-      else newTargetTile = { x: newCurrentTile.x + 1, y: newCurrentTile.y }; // 'right'
+      else if (chosenDirection === 'left') newTargetTile = { x: newCurrentTile.x - 1, y: newCurrentTile.y }; // left = x - 1
+      else newTargetTile = { x: newCurrentTile.x + 1, y: newCurrentTile.y }; // right = x + 1
 
       return {
         ...player,
@@ -116,8 +116,8 @@ export function updatePlayerMovement(player: Player, maze: Maze, dt: number, spe
 
   if (chosenDirection === 'up') newTargetTile = { x: currentTile.x, y: currentTile.y - 1 };
   else if (chosenDirection === 'down') newTargetTile = { x: currentTile.x, y: currentTile.y + 1 };
-  else if (chosenDirection === 'left') newTargetTile = { x: currentTile.x - 1, y: currentTile.y };
-  else if (chosenDirection === 'right') newTargetTile = { x: currentTile.x + 1, y: currentTile.y };
+  else if (chosenDirection === 'left') newTargetTile = { x: currentTile.x - 1, y: currentTile.y }; // left = x - 1
+  else if (chosenDirection === 'right') newTargetTile = { x: currentTile.x + 1, y: currentTile.y }; // right = x + 1
 
   return {
     ...player,

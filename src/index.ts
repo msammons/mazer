@@ -19,6 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Maze and player setup
   const maze = createSimpleMaze();
   let player: Player = createInitialPlayer();
+
+  // --- DIAGNOSTICS ---
+  // Print maze grid with player position
+  console.log("Maze grid (0=wall, 1=empty, P=player):");
+  maze.grid.forEach((row, y) => {
+    console.log(row.map((cell, x) => (x === player.currentTile.x && y === player.currentTile.y ? "P" : cell === "wall" ? "0" : "1")).join(" "));
+  });
   let moving = false;
   let moveTimer = 0;
   const moveInterval = 180; // ms per tile
@@ -44,9 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Keyboard input handling (multi-key, arcade-style)
   const keyToDir: Record<string, Direction> = {
     ArrowUp: 'up',
+    w: 'up',
     ArrowDown: 'down',
+    s: 'down',
     ArrowLeft: 'left',
+    a: 'left',
     ArrowRight: 'right',
+    d: 'right',
   };
 
   // Track all currently held directions in order of most recent press
@@ -63,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     const dir = keyToDir[e.key];
     if (dir) {
+      // Debug log: show direction and player grid position
+      console.log(`[KEYDOWN] Direction: ${dir}, Player: (${player.currentTile.x}, ${player.currentTile.y}), Facing: ${player.direction}`);
       // Remove if already present, then add to end (most recent)
       heldDirections = heldDirections.filter(d => d !== dir);
       heldDirections.push(dir);
@@ -107,12 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Camera
   const camera = new ArcRotateCamera(
     'camera',
-    Math.PI / 2, // alpha: top-down
+    0, // alpha: look from +Z, so +X is right, +Z is down (Babylon.js default XZ plane)
     0.01,        // beta: looking almost straight down
     Math.max(maze.width, maze.height) * 1.2,
     new Vector3(maze.width / 2, 0, maze.height / 2),
     scene,
   );
+  // Print camera alpha, target, and position
+  console.log("Camera alpha:", camera.alpha, "Camera target:", camera.target, "Camera position:", camera.position);
   camera.attachControl(canvas, true);
   camera.lowerBetaLimit = 0.01;
   camera.upperBetaLimit = 0.01;
@@ -138,31 +153,65 @@ document.addEventListener('DOMContentLoaded', () => {
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       const cell = maze.grid[y][x];
-      // Draw vertical wall between (x, y) and (x+1, y) if one is 'wall' and the other is not
-      if (x < maze.width - 1) {
-        const thisIsWall = maze.grid[y][x] === 'wall';
-        const rightIsWall = maze.grid[y][x + 1] === 'wall';
-        if (thisIsWall !== rightIsWall) {
-          const vWall = MeshBuilder.CreateBox(`vwall_${x}_${y}`, { width: wallThickness, depth: wallLength, height: wallHeight }, scene);
-          vWall.position = new Vector3(x + 0.5, wallHeight / 2, y);
-          const mat = new StandardMaterial(`vwallMat_${x}_${y}`, scene);
+      // For each 'wall' cell, check all four directions and draw a wall segment on every exposed edge
+      if (cell === 'wall') {
+        // Use a thin wall thickness for classic look
+        const classicWallThickness = 0.12;
+
+        // Left wall (vertical, at cell boundary)
+        if (x === 0 || maze.grid[y][x-1] !== 'wall') {
+          const lWall = MeshBuilder.CreateBox(`lwall_${x}_${y}`, {
+            width: classicWallThickness,
+            depth: 1.0,
+            height: wallHeight
+          }, scene);
+          lWall.position = new Vector3(x, wallHeight / 2, y + 0.5);
+          const mat = new StandardMaterial(`lwallMat_${x}_${y}`, scene);
           mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
           mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          vWall.material = mat;
+          lWall.material = mat;
           meshCount++;
         }
-      }
-      // Draw horizontal wall between (x, y) and (x, y+1) if one is 'wall' and the other is not
-      if (y < maze.height - 1) {
-        const thisIsWall = maze.grid[y][x] === 'wall';
-        const downIsWall = maze.grid[y + 1][x] === 'wall';
-        if (thisIsWall !== downIsWall) {
-          const hWall = MeshBuilder.CreateBox(`hwall_${x}_${y}`, { width: wallLength, depth: wallThickness, height: wallHeight }, scene);
-          hWall.position = new Vector3(x, wallHeight / 2, y + 0.5);
-          const mat = new StandardMaterial(`hwallMat_${x}_${y}`, scene);
+        // Right wall (vertical, at cell boundary)
+        if (x === maze.width - 1 || maze.grid[y][x+1] !== 'wall') {
+          const rWall = MeshBuilder.CreateBox(`rwall_${x}_${y}`, {
+            width: classicWallThickness,
+            depth: 1.0,
+            height: wallHeight
+          }, scene);
+          rWall.position = new Vector3(x + 1, wallHeight / 2, y + 0.5);
+          const mat = new StandardMaterial(`rwallMat_${x}_${y}`, scene);
           mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
           mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-          hWall.material = mat;
+          rWall.material = mat;
+          meshCount++;
+        }
+        // Top wall (horizontal, at cell boundary)
+        if (y === 0 || maze.grid[y-1][x] !== 'wall') {
+          const tWall = MeshBuilder.CreateBox(`twall_${x}_${y}`, {
+            width: 1.0,
+            depth: classicWallThickness,
+            height: wallHeight
+          }, scene);
+          tWall.position = new Vector3(x + 0.5, wallHeight / 2, y);
+          const mat = new StandardMaterial(`twallMat_${x}_${y}`, scene);
+          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+          tWall.material = mat;
+          meshCount++;
+        }
+        // Bottom wall (horizontal, at cell boundary)
+        if (y === maze.height - 1 || maze.grid[y+1][x] !== 'wall') {
+          const bWall = MeshBuilder.CreateBox(`bwall_${x}_${y}`, {
+            width: 1.0,
+            depth: classicWallThickness,
+            height: wallHeight
+          }, scene);
+          bWall.position = new Vector3(x + 0.5, wallHeight / 2, y + 1);
+          const mat = new StandardMaterial(`bwallMat_${x}_${y}`, scene);
+          mat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+          mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+          bWall.material = mat;
           meshCount++;
         }
       } else if (cell === 'fish') {
@@ -205,13 +254,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   // Update debug overlay after mesh creation
-  updateDebugOverlay(meshCount, getPlayerWorldPosition(player), camera.target, camera.radius, camera.alpha, camera.beta);
+  updateDebugOverlay(meshCount, getPlayerWorldPosition(player, maze.width), camera.target, camera.radius, camera.alpha, camera.beta);
 
   // Render player (shark)
-  const shark = MeshBuilder.CreateSphere('shark', { diameter: 0.7 }, scene); // original size
-  let playerPos = getPlayerWorldPosition(player);
+  const shark = MeshBuilder.CreateSphere('shark', { diameter: 1.3 }, scene); // Pac-Man style: larger than cell
+  let playerPos = getPlayerWorldPosition(player, maze.width); // Pass maze width for X mirroring
+  // Print player world position
+  console.log("Player world position (initial):", playerPos);
   // Raise Y position above maze floor for visibility
-  shark.position = new Vector3(maze.width - 1 - playerPos.x, 1.1, playerPos.z);
+  shark.position = new Vector3(playerPos.x, 1.1, playerPos.z);
   const sharkMat = new StandardMaterial('sharkMat', scene);
   sharkMat.diffuseColor = new Color3(1, 0.5, 0); // bright orange
   shark.material = sharkMat;
@@ -227,8 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dt = (now - lastTime) / 1000;
     lastTime = now;
     player = updatePlayerMovement(player, maze, dt, SHARK_SPEED);
-    const pos = getPlayerWorldPosition(player);
-    shark.position = new Vector3(maze.width - 1 - pos.x, 1.1, pos.z);
+    const pos = getPlayerWorldPosition(player, maze.width);
+    shark.position = new Vector3(pos.x, 1.1, pos.z); // pos is now mirrored X
     updateDebugOverlay(meshCount, pos, camera.target, camera.radius, camera.alpha, camera.beta);
     scene.render();
   });

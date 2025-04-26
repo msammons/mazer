@@ -16,6 +16,7 @@ export interface Player {
 
 export function createInitialPlayer(): Player {
   return {
+    // Start in upper left open cell (just inside the top-left wall)
     currentTile: { x: 1, y: 1 },
     targetTile: { x: 2, y: 1 }, // start moving right
     progress: 0,
@@ -35,10 +36,14 @@ export interface SimpleVector3 {
   z: number;
 }
 
-export function getPlayerWorldPosition(player: Player): SimpleVector3 {
-  // Linear interpolate between currentTile and targetTile using progress
-  const x = player.currentTile.x + (player.targetTile.x - player.currentTile.x) * player.progress;
+/**
+ * Returns the player's world position, mirroring X so logical (0, y) is rightmost and (mazeWidth-1, y) is leftmost.
+ */
+export function getPlayerWorldPosition(player: Player, mazeWidth: number): SimpleVector3 {
+  // Mirror X axis for Babylon.js ArcRotateCamera alpha=0
+  const logicalX = player.currentTile.x + (player.targetTile.x - player.currentTile.x) * player.progress;
+  const x = (mazeWidth - 1) - logicalX + 0.5;
   const y = 0.5;
-  const z = player.currentTile.y + (player.targetTile.y - player.currentTile.y) * player.progress;
+  const z = player.currentTile.y + (player.targetTile.y - player.currentTile.y) * player.progress + 0.5;
   return { x, y, z };
 }
