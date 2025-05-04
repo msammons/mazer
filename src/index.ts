@@ -1,5 +1,5 @@
 // Entry point for Shark Robot Maze
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4, Mesh, DynamicTexture } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, PBRMaterial, Color3, Color4, Mesh, DynamicTexture } from '@babylonjs/core';
 import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
 import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
@@ -173,37 +173,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cell === 'pellet') {
         const pellet = MeshBuilder.CreateSphere(`pellet_${x}_${y}`, { diameter: 0.4 }, scene);
         pellet.position = new Vector3(x + 0.5, 0.25, y + 0.5); // Center in cell
-        const mat = new StandardMaterial(`pelletMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(1, 1, 0.3); // Bright yellow
+        const mat = createMaterial(`pelletMat_${x}_${y}`, new Color3(1, 1, 0.3), scene);
         pellet.material = mat;
         pelletMeshes[`${x},${y}`] = pellet;
         meshCount++;
       } else if (cell === 'powerup') {
         const powerup = MeshBuilder.CreateSphere(`powerup_${x}_${y}`, { diameter: 0.5 }, scene);
         powerup.position = new Vector3(x, 0.3, y);
-        const mat = new StandardMaterial(`powerupMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.8, 0.1, 0.7);
+        const mat = createMaterial(`powerupMat_${x}_${y}`, new Color3(0.8, 0.1, 0.7), scene);
         powerup.material = mat;
         meshCount++;
       } else if (cell === 'hazard') {
         const hazard = MeshBuilder.CreateTorus(`hazard_${x}_${y}`, { diameter: 0.6, thickness: 0.15 }, scene);
         hazard.position = new Vector3(x, 0.15, y);
-        const mat = new StandardMaterial(`hazardMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.1, 0.9, 0.9);
+        const mat = createMaterial(`hazardMat_${x}_${y}`, new Color3(0.1, 0.9, 0.9), scene);
         hazard.material = mat;
         meshCount++;
       } else if (cell === 'shortcut') {
         const shortcut = MeshBuilder.CreateBox(`shortcut_${x}_${y}`, { size: 0.8, height: 0.2 }, scene);
         shortcut.position = new Vector3(x, 0.1, y);
-        const mat = new StandardMaterial(`shortcutMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.1, 0.8, 0.2);
+        const mat = createMaterial(`shortcutMat_${x}_${y}`, new Color3(0.1, 0.8, 0.2), scene);
         shortcut.material = mat;
         meshCount++;
       } else if (cell === 'spawn') {
         const spawn = MeshBuilder.CreateBox(`spawn_${x}_${y}`, { size: 0.9, height: 0.2 }, scene);
         spawn.position = new Vector3(x, 0.1, y);
-        const mat = new StandardMaterial(`spawnMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(1, 1, 1);
+        const mat = createMaterial(`spawnMat_${x}_${y}`, new Color3(1, 1, 1), scene);
         spawn.material = mat;
         meshCount++;
         console.log(`Created spawn mesh at position ${x}, ${y}`);
@@ -223,9 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
         height: wallHeight
       }, scene);
       centerMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5);
-      const centerMat = new StandardMaterial(`wallMat_center_${x}_${y}`, scene);
-      centerMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-      centerMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+      const wallColor = new Color3(0.5, 0.5, 0.5);  // Consistent gray color for all walls
+      const centerMat = createMaterial(`wallMat_center_${x}_${y}`, wallColor, scene);
       centerMesh.material = centerMat;
       meshCount++;
       // North arm
@@ -236,9 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: wallHeight
         }, scene);
         nMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5 - 0.5);
-        const nMat = new StandardMaterial(`wallMat_n_${x}_${y}`, scene);
-        nMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-        nMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        const nMat = createMaterial(`wallMat_n_${x}_${y}`, wallColor, scene);
         nMesh.material = nMat;
         meshCount++;
       }
@@ -250,9 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: wallHeight
         }, scene);
         sMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5 + 0.5);
-        const sMat = new StandardMaterial(`wallMat_s_${x}_${y}`, scene);
-        sMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-        sMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        const sMat = createMaterial(`wallMat_s_${x}_${y}`, wallColor, scene);
         sMesh.material = sMat;
         meshCount++;
       }
@@ -264,9 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: wallHeight
         }, scene);
         wMesh.position = new Vector3(x + 0.5 - 0.5, wallHeight / 2, y + 0.5);
-        const wMat = new StandardMaterial(`wallMat_w_${x}_${y}`, scene);
-        wMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-        wMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        const wMat = createMaterial(`wallMat_w_${x}_${y}`, wallColor, scene);
         wMesh.material = wMat;
         meshCount++;
       }
@@ -278,9 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
           height: wallHeight
         }, scene);
         eMesh.position = new Vector3(x + 0.5 + 0.5, wallHeight / 2, y + 0.5);
-        const eMat = new StandardMaterial(`wallMat_e_${x}_${y}`, scene);
-        eMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
-        eMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        const eMat = createMaterial(`wallMat_e_${x}_${y}`, wallColor, scene);
         eMesh.material = eMat;
         meshCount++;
       }
@@ -296,8 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log("Player world position (initial):", playerPos);
   // Raise Y position above maze floor for visibility
   shark.position = new Vector3(playerPos.x, 1.1, playerPos.z);
-  const sharkMat = new StandardMaterial('sharkMat', scene);
-  sharkMat.diffuseColor = new Color3(1, 0.5, 0); // bright orange
+  // Helper function to create materials
+  function createMaterial(name: string, color: Color3, scene: Scene): PBRMaterial {
+    const mat = new PBRMaterial(name, scene);
+    mat.albedoColor = color;
+    mat.metallic = 0;  // Non-metallic material
+    mat.roughness = 0.5;  // Medium roughness for consistent appearance
+    mat.emissiveColor = new Color3(0, 0, 0);  // No emissive light
+    mat.specularIntensity = 0.5;  // Reduced specular intensity for softer highlights
+    return mat;
+  }
+
+  const sharkMat = createMaterial('sharkMat', new Color3(1, 0.5, 0), scene);
   shark.material = sharkMat;
   console.log('Player initial position:', playerPos);
 
