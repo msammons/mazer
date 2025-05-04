@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Seamless Pac-Man-style wall arms: each wall cell renders arms to all adjacent wall cells ---
-  const wallThickness = 0.28;
+  const wallThickness = 0.50;
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       if (maze.grid[y][x] !== 'wall') continue;
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDebugOverlay(meshCount, getPlayerWorldPosition(player, maze.width), camera.target, camera.radius, camera.alpha, camera.beta);
 
   // Render player (shark)
-  const shark = MeshBuilder.CreateSphere('shark', { diameter: 1.3 }, scene); // Slightly smaller player
+  const shark = MeshBuilder.CreateSphere('shark', { diameter: 0.88 }, scene); // Classic Pac-Man player size
   let playerPos = getPlayerWorldPosition(player, maze.width); // Pass maze width for X mirroring
   // Print player world position
   console.log("Player world position (initial):", playerPos);
