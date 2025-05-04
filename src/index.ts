@@ -148,23 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render maze
   let meshCount = 0;
   const wallHeight = 1.5;
+
+  // Render non-wall cells (fish, powerup, hazard, shortcut, spawn)
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       const cell = maze.grid[y][x];
-      // For each 'wall' cell, fill the cell with a solid block
-      if (cell === 'wall') {
-        const wallBlock = MeshBuilder.CreateBox(`wall_${x}_${y}`, {
-          width: 1,
-          depth: 1,
-          height: wallHeight
-        }, scene);
-        wallBlock.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5);
-        const mat = new StandardMaterial(`wallMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.1, 0.3, 0.8); // Consistent wall color
-        mat.emissiveColor = new Color3(0.1, 0.3, 0.8);
-        wallBlock.material = mat;
-        meshCount++;
-      } else if (cell === 'fish') {
+      if (cell === 'fish') {
         const fish = MeshBuilder.CreateSphere(`fish_${x}_${y}`, { diameter: 0.4 }, scene);
         fish.position = new Vector3(x, 0.25, y);
         const mat = new StandardMaterial(`fishMat_${x}_${y}`, scene);
@@ -203,11 +192,87 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+
+  // --- Seamless Pac-Man-style wall arms: each wall cell renders arms to all adjacent wall cells ---
+  const wallThickness = 0.28;
+  for (let y = 0; y < maze.height; y++) {
+    for (let x = 0; x < maze.width; x++) {
+      if (maze.grid[y][x] !== 'wall') continue;
+      // Always render a center block (for junction/solidness)
+      const centerMesh = MeshBuilder.CreateBox(`wall_center_${x}_${y}`, {
+        width: wallThickness,
+        depth: wallThickness,
+        height: wallHeight
+      }, scene);
+      centerMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5);
+      const centerMat = new StandardMaterial(`wallMat_center_${x}_${y}`, scene);
+      centerMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+      centerMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+      centerMesh.material = centerMat;
+      meshCount++;
+      // North arm
+      if (y > 0 && maze.grid[y - 1][x] === 'wall') {
+        const nMesh = MeshBuilder.CreateBox(`wall_n_${x}_${y}`, {
+          width: wallThickness,
+          depth: 1,
+          height: wallHeight
+        }, scene);
+        nMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5 - 0.5);
+        const nMat = new StandardMaterial(`wallMat_n_${x}_${y}`, scene);
+        nMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+        nMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        nMesh.material = nMat;
+        meshCount++;
+      }
+      // South arm
+      if (y < maze.height - 1 && maze.grid[y + 1][x] === 'wall') {
+        const sMesh = MeshBuilder.CreateBox(`wall_s_${x}_${y}`, {
+          width: wallThickness,
+          depth: 1,
+          height: wallHeight
+        }, scene);
+        sMesh.position = new Vector3(x + 0.5, wallHeight / 2, y + 0.5 + 0.5);
+        const sMat = new StandardMaterial(`wallMat_s_${x}_${y}`, scene);
+        sMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+        sMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        sMesh.material = sMat;
+        meshCount++;
+      }
+      // West arm
+      if (x > 0 && maze.grid[y][x - 1] === 'wall') {
+        const wMesh = MeshBuilder.CreateBox(`wall_w_${x}_${y}`, {
+          width: 1,
+          depth: wallThickness,
+          height: wallHeight
+        }, scene);
+        wMesh.position = new Vector3(x + 0.5 - 0.5, wallHeight / 2, y + 0.5);
+        const wMat = new StandardMaterial(`wallMat_w_${x}_${y}`, scene);
+        wMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+        wMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        wMesh.material = wMat;
+        meshCount++;
+      }
+      // East arm
+      if (x < maze.width - 1 && maze.grid[y][x + 1] === 'wall') {
+        const eMesh = MeshBuilder.CreateBox(`wall_e_${x}_${y}`, {
+          width: 1,
+          depth: wallThickness,
+          height: wallHeight
+        }, scene);
+        eMesh.position = new Vector3(x + 0.5 + 0.5, wallHeight / 2, y + 0.5);
+        const eMat = new StandardMaterial(`wallMat_e_${x}_${y}`, scene);
+        eMat.diffuseColor = new Color3(0.1, 0.3, 0.8);
+        eMat.emissiveColor = new Color3(0.1, 0.3, 0.8);
+        eMesh.material = eMat;
+        meshCount++;
+      }
+    }
+  }
   // Update debug overlay after mesh creation
   updateDebugOverlay(meshCount, getPlayerWorldPosition(player, maze.width), camera.target, camera.radius, camera.alpha, camera.beta);
 
   // Render player (shark)
-  const shark = MeshBuilder.CreateSphere('shark', { diameter: 1.3 }, scene); // Pac-Man style: larger than cell
+  const shark = MeshBuilder.CreateSphere('shark', { diameter: 1.3 }, scene); // Slightly smaller player
   let playerPos = getPlayerWorldPosition(player, maze.width); // Pass maze width for X mirroring
   // Print player world position
   console.log("Player world position (initial):", playerPos);
