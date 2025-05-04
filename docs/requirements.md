@@ -51,11 +51,104 @@
 - [ ] FX: Visual effects for big events (e.g., eating powerups, eating robots).
 - [ ] Short pause/freeze when the player eats a robot or powerup to emphasize the event. During this pause, visuals are frozen but sound continues to play.
 
-## 8. Technical
-- ✅ Built with Babylon.js and TypeScript.
-- ✅ Modular code structure (player, enemies, maze, powerups, UI).
-- ✅ Linting, formatting, and documentation enforced.
-- ✅ Runs in modern web browsers.
+## 8. Technical Requirements
+
+### Core Technologies
+- ✅ Babylon.js 6.x for 3D rendering
+- ✅ TypeScript 5.x for type safety
+- ✅ Webpack 5.x for bundling
+- ✅ ESLint for code quality
+- ✅ Prettier for code formatting
+
+### Code Structure
+- ✅ Modular architecture:
+  - `src/maze/`: Maze generation and layout
+  - `src/player/`: Player movement and state
+  - `src/robot/`: Robot AI and movement
+  - `src/powerup/`: Power-up logic and effects
+  - `src/ui/`: User interface components
+  - `src/utils/`: Utility functions and helpers
+
+### Performance Requirements
+- ✅ Maintain 60 FPS on modern hardware
+- ✅ Memory usage < 500MB
+- ✅ Initial load time < 3 seconds
+- ✅ Asset loading optimization
+- ✅ Mesh pooling for dynamic objects
+
+### Type Safety
+- ✅ All major components must have TypeScript interfaces
+- ✅ Use enums for direction and state management
+- ✅ Strict null checks enabled
+- ✅ No implicit any types
+
+### Error Handling
+- ✅ Centralized error logging
+- ✅ Graceful degradation for non-critical failures
+- ✅ Clear error messages for debugging
+- ✅ Error boundaries for UI components
+
+### Testing Requirements
+- ✅ Unit tests for core game logic
+- ✅ Integration tests for component interactions
+- ✅ Visual regression tests
+- ✅ Performance benchmarks
+- ✅ Browser compatibility testing
+
+### Asset Management
+- ✅ Asset loading system
+- ✅ Asset caching
+- ✅ Asset hot-reloading in development
+- ✅ Asset optimization pipeline
+
+### State Management
+- ✅ Immutable state updates
+- ✅ Predictable state transitions
+- ✅ Clear separation of game state and UI state
+- ✅ Proper event handling
+
+### Memory Management
+- ✅ Proper mesh cleanup
+- ✅ Resource pooling
+- ✅ Memory leak prevention
+- ✅ Regular memory profiling
+
+### Network Requirements
+- ✅ Offline-first design
+- ✅ Local storage for save data
+- ✅ Proper error handling for storage failures
+
+### Security Requirements
+- ✅ Proper input sanitization
+- ✅ XSS prevention
+- ✅ CSRF protection
+- ✅ Secure local storage usage
+
+### Development Workflow
+- ✅ Git for version control
+- ✅ Feature branching
+- ✅ Pull request reviews
+- ✅ Automated testing
+- ✅ Continuous integration
+
+### Documentation Requirements
+- ✅ API documentation
+- ✅ Code comments
+- ✅ Architecture documentation
+- ✅ Setup instructions
+- ✅ Troubleshooting guide
+
+### Accessibility Requirements
+- ✅ Keyboard navigation
+- ✅ Screen reader support
+- ✅ Color contrast compliance
+- ✅ Text scaling support
+
+### Internationalization
+- ✅ Localizable text
+- ✅ Right-to-left support
+- ✅ Date/time formatting
+- ✅ Number formatting
 
 ## 9. Development Process & Testing
 - Features are developed incrementally, step by step.

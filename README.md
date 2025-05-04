@@ -1,42 +1,37 @@
 # Shark Robot Maze
 
-A top-down 3D browser game where you control a shark, eat fish, avoid robots, and collect powerups in a dynamic maze. Built with Babylon.js and TypeScript.
+A modern implementation of a classic maze game featuring robots and power-ups.
 
-## Features
-- Maze-based gameplay with axis-aligned movement
-- AI-controlled robot enemies
-- Powerups and hazards
-- Visual and audio FX
-- Automated testing and strict coding standards
+## Documentation
 
-## Requirements
-See `requirements.md` for the full design spec.
+All project documentation is located in the [docs](docs/) directory:
+
+- [Best Practices](docs/best-practices.md) - Project-wide coding and design guidelines
+- [Project Plan](docs/PROJECT_PLAN.md) - Overall project roadmap and goals
+- [Contributing](docs/CONTRIBUTING.md) - Guidelines for contributing to the project
+- [Requirements](docs/requirements.md) - Project requirements and dependencies
 
 ## Getting Started
-1. Clone the repository:
-   ```sh
-   git clone <repo-url>
-   cd shark-robot-maze
-   ```
-2. Install dependencies:
-   ```sh
+
+1. Install dependencies:
+   ```bash
    npm install
    ```
-3. Run the development server:
-   ```sh
-   npm run start
+
+2. Start the development server:
+   ```bash
+   npm start
    ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Scripts
-- `npm run start` – Start the dev server
-- `npm run build` – Build for production
-- `npm run lint` – Lint code
-- `npm run format` – Format code
-- `npm test` – Run tests
+3. Open your browser to `http://localhost:3000`
 
-## Contributing
-See `CONTRIBUTING.md` for coding standards and contribution guidelines.
+## Development
+
+- Source code is located in the `src` directory
+- TypeScript is used for type safety
+- Babylon.js is used for 3D rendering
+- Development server uses webpack
 
 ## License
-MIT
+
+[Add your license information here]

@@ -4,6 +4,7 @@ import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
 import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
 import { isOpposite } from './player/reverse';
+import { createRobot, updateRobotMovement, Robot } from './robot/robot';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasElement = document.getElementById('gameCanvas');
@@ -19,6 +20,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // Maze and player setup
   const maze = createSimpleMaze();
   let player: Player = createInitialPlayer();
+  
+  // Create robots
+  const robots: Robot[] = [];
+  // Place robots at spawn points (if any)
+  for (let y = 0; y < maze.height; y++) {
+    for (let x = 0; x < maze.width; x++) {
+      if (maze.grid[y][x] === 'spawn') {
+        robots.push(createRobot(maze, { x, y }));
+      }
+    }
+  }
+  
+  // If no spawn points, place robots at random empty locations
+  if (robots.length === 0) {
+    for (let i = 0; i < 3; i++) { // Create 3 robots
+      let x, y;
+      do {
+        x = Math.floor(Math.random() * maze.width);
+        y = Math.floor(Math.random() * maze.height);
+      } while (maze.grid[y][x] === 'wall');
+      robots.push(createRobot(maze, { x, y }));
+    }
+  }
 
   // --- DIAGNOSTICS ---
   // Print maze grid with player position
@@ -206,6 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Create robot meshes
+  robots.forEach((robot, index) => {
+    const robotMesh = MeshBuilder.CreateBox(`robot_${index}`, { size: 0.8 }, scene);
+    robotMesh.position = new Vector3(robot.currentTile.x + 0.5, 0.5, robot.currentTile.y + 0.5);
+    const robotMat = createMaterial(`robotMat_${index}`, new Color3(0.5, 0, 0.5), scene);
+    robotMesh.material = robotMat;
+    robot.mesh = robotMesh;
+  });
+
   // --- Seamless Pac-Man-style wall arms: each wall cell renders arms to all adjacent wall cells ---
   const wallThickness = 0.50;
   for (let y = 0; y < maze.height; y++) {
@@ -302,7 +335,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // Game loop for player movement
   const SHARK_SPEED = 4; // tiles/sec
   let lastTime = performance.now();
+  let lastUpdateTime = Date.now();
+  const ROBOT_MOVE_INTERVAL = 300; // ms between robot moves
+
   engine.runRenderLoop(() => {
+    const currentTime = Date.now();
+    const deltaTime = currentTime - lastUpdateTime;
+
+    // Update robots every ROBOT_MOVE_INTERVAL ms
+    if (deltaTime >= ROBOT_MOVE_INTERVAL) {
+      robots.forEach(robot => {
+        robot = updateRobotMovement(robot, maze);
+        // Update robot mesh position
+        if (robot.mesh) {
+          robot.mesh.position = new Vector3(robot.currentTile.x + 0.5, 0.5, robot.currentTile.y + 0.5);
+        }
+      });
+      lastUpdateTime = currentTime;
+    }
+
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
     lastTime = now;
