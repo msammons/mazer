@@ -1,5 +1,5 @@
 // Entry point for Shark Robot Maze
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4, Mesh } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4, Mesh, DynamicTexture } from '@babylonjs/core';
 import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
 import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
@@ -142,12 +142,26 @@ document.addEventListener('DOMContentLoaded', () => {
   camera.target = new Vector3(maze.width / 2, 0, maze.height / 2);
   console.log('Camera position:', camera.target, 'radius:', camera.radius, 'alpha:', camera.alpha, 'beta:', camera.beta);
 
+  // Initialize mesh count
+  let meshCount = 0;
+
   // Light
   const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene);
   light.intensity = 0.9;
 
+  // Score display using HTML
+  const scoreElement = document.createElement('div');
+  scoreElement.style.position = 'absolute';
+  scoreElement.style.top = '10px';
+  scoreElement.style.left = '10px';
+  scoreElement.style.fontSize = '24px';
+  scoreElement.style.color = 'white';
+  scoreElement.style.zIndex = '100';
+  scoreElement.style.pointerEvents = 'none'; // Make it not interfere with game controls
+  scoreElement.textContent = 'Score: 0';
+  document.body.appendChild(scoreElement);
+
   // Render maze
-  let meshCount = 0;
   const wallHeight = 1.5;
 
   // Render pellets and other non-wall cells
@@ -311,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       score++;
     }
+    // Update score display
+    scoreElement.textContent = `Score: ${score}`;
     updateDebugOverlay(meshCount, pos, camera.target, camera.radius, camera.alpha, camera.beta, score);
     scene.render();
   });
