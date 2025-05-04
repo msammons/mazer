@@ -1,5 +1,5 @@
 // Entry point for Shark Robot Maze
-import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4 } from '@babylonjs/core';
+import { Engine, Scene, ArcRotateCamera, HemisphericLight, MeshBuilder, Vector3, StandardMaterial, Color3, Color4, Mesh } from '@babylonjs/core';
 import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
 import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function updateDebugOverlay(meshCount: number, playerPos: {x: number, y: number, z: number}, cameraTarget: Vector3, cameraRadius: number, cameraAlpha?: number, cameraBeta?: number) {
+  function updateDebugOverlay(meshCount: number, playerPos: {x: number, y: number, z: number}, cameraTarget: Vector3, cameraRadius: number, cameraAlpha?: number, cameraBeta?: number, score: number = 0) {
     if (!debugOverlay) return;
     try {
       // Show player grid position and direction
@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Mesh count: ${meshCount}<br>
         Player pos: (${playerPos.x.toFixed(2)}, ${playerPos.y.toFixed(2)}, ${playerPos.z.toFixed(2)})<br>
         Player dir: ${playerDir}<br>
+        Score: ${score}<br>
         Camera target: (${cameraTarget.x.toFixed(2)}, ${cameraTarget.y.toFixed(2)}, ${cameraTarget.z.toFixed(2)})<br>
         Camera radius: ${cameraRadius.toFixed(2)}<br>
         Camera alpha: ${cameraAlpha?.toFixed(2)}<br>
@@ -149,16 +150,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let meshCount = 0;
   const wallHeight = 1.5;
 
-  // Render non-wall cells (fish, powerup, hazard, shortcut, spawn)
+  // Render pellets and other non-wall cells
+  let score = 0;
+  const pelletMeshes: { [key: string]: Mesh } = {};
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       const cell = maze.grid[y][x];
-      if (cell === 'fish') {
-        const fish = MeshBuilder.CreateSphere(`fish_${x}_${y}`, { diameter: 0.4 }, scene);
-        fish.position = new Vector3(x, 0.25, y);
-        const mat = new StandardMaterial(`fishMat_${x}_${y}`, scene);
-        mat.diffuseColor = new Color3(0.9, 0.8, 0.2);
-        fish.material = mat;
+      if (cell === 'pellet') {
+        const pellet = MeshBuilder.CreateSphere(`pellet_${x}_${y}`, { diameter: 0.4 }, scene);
+        pellet.position = new Vector3(x + 0.5, 0.25, y + 0.5); // Center in cell
+        const mat = new StandardMaterial(`pelletMat_${x}_${y}`, scene);
+        mat.diffuseColor = new Color3(1, 1, 0.3); // Bright yellow
+        pellet.material = mat;
+        pelletMeshes[`${x},${y}`] = pellet;
         meshCount++;
       } else if (cell === 'powerup') {
         const powerup = MeshBuilder.CreateSphere(`powerup_${x}_${y}`, { diameter: 0.5 }, scene);
@@ -295,7 +299,19 @@ document.addEventListener('DOMContentLoaded', () => {
     player = updatePlayerMovement(player, maze, dt, SHARK_SPEED);
     const pos = getPlayerWorldPosition(player, maze.width);
     shark.position = new Vector3(pos.x, 1.1, pos.z); // pos is now mirrored X
-    updateDebugOverlay(meshCount, pos, camera.target, camera.radius, camera.alpha, camera.beta);
+    // Check for pellet collection
+    const px = Math.floor(pos.x);
+    const py = Math.floor(pos.z);
+    if (maze.grid[py][px] === 'pellet') {
+      maze.grid[py][px] = 'empty';
+      const key = `${px},${py}`;
+      if (pelletMeshes[key]) {
+        pelletMeshes[key].dispose();
+        delete pelletMeshes[key];
+      }
+      score++;
+    }
+    updateDebugOverlay(meshCount, pos, camera.target, camera.radius, camera.alpha, camera.beta, score);
     scene.render();
   });
 

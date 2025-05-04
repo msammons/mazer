@@ -1,6 +1,6 @@
 // Maze logic and data structures
 
-export type MazeCell = 'empty' | 'wall' | 'fish' | 'powerup' | 'hazard' | 'shortcut' | 'spawn';
+export type MazeCell = 'empty' | 'wall' | 'pellet' | 'powerup' | 'hazard' | 'shortcut' | 'spawn';
 
 export interface Maze {
   width: number;
@@ -30,7 +30,7 @@ export function createSimpleMaze(): Maze {
   for (let y = 0; y < height; y++) {
     const row: MazeCell[] = [];
     for (let x = 0; x < width; x++) {
-      row.push(layout[y][x] === 0 ? 'wall' : 'empty');
+      row.push(layout[y][x] === 0 ? 'wall' : 'pellet');
     }
     grid.push(row);
   }

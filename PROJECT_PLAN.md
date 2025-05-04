@@ -45,4 +45,10 @@
 
 ---
 
+## May 2025 Maze Rendering Update
+- **Wall thickness:** 0.50 (double previous value; bold, prominent walls)
+- **Player diameter:** 0.88 (fills most of the corridor, classic Pac-Man size)
+- **Rendering style:** Seamless multi-arm tile approach—each wall cell renders arms to all adjacent wall cells for solid, continuous, gapless walls.
+- **Effect:** Maze now has a classic arcade look with bold walls and a player that fits tightly within corridors.
+
 Check off features as they are completed. Add new features or requests below!
