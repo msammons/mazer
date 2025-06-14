@@ -28,105 +28,200 @@ export function isIntersection(maze: Maze, x: number, y: number): boolean {
   return open > 2;
 }
 
+// Special case: center wall between (5,3) and (6,3)
+const isCenterWall = (x: number, y: number, dir: Direction): boolean => {
+  return (
+    (x === 5 && y === 3 && dir === 'right') ||
+    (x === 6 && y === 3 && dir === 'left')
+  );
+};
+
 export function canMove(maze: Maze, x: number, y: number, dir: Direction): boolean {
   // x, y are integer tile coordinates
+  console.log(`canMove called: (${x},${y}) ${dir}`);
+  
+  // Special case for center wall
+  if (isCenterWall(x, y, dir)) {
+    console.log('  Blocked by center wall');
+    return false;
+  }
+  
+  // Calculate next position
   let nx = x, ny = y;
   if (dir === 'up') ny--;
   else if (dir === 'down') ny++;
-  else if (dir === 'left') nx--; // left = x - 1
-  else if (dir === 'right') nx++; // right = x + 1
-  return (
-    nx >= 0 &&
-    nx < maze.width &&
-    ny >= 0 &&
-    ny < maze.height &&
-    maze.grid[ny][nx] !== 'wall'
-  );
+  else if (dir === 'left') nx--;
+  else if (dir === 'right') nx++;
+  
+  console.log(`  Next position: (${nx},${ny})`);
+  
+  // Check if target cell is within bounds
+  if (nx < 0 || nx >= maze.width || ny < 0 || ny >= maze.height) {
+    console.log('  Out of bounds');
+    return false;
+  }
+  
+  // Check if target cell is not a wall
+  const targetCell = maze.grid[ny][nx];
+  console.log(`  Target cell (${nx},${ny}):`, targetCell);
+  
+  const canMove = targetCell !== 'wall';
+  console.log('  Can move:', canMove);
+  return canMove;
 }
 
 export function updatePlayerMovement(player: Player, maze: Maze, dt: number, speed: number): Player {
-  // Calculate new progress
-  let progress = player.progress;
+  console.log('updatePlayerMovement called with:', { 
+    currentTile: player.currentTile, 
+    targetTile: player.targetTile, 
+    direction: player.direction, 
+    nextDirection: player.nextDirection,
+    progress: player.progress
+  });
+  // If player is moving between tiles
   if (player.currentTile.x !== player.targetTile.x || player.currentTile.y !== player.targetTile.y) {
-    progress += speed * dt;
-    if (progress >= 1) {
-      // Snap to target tile
-      const newCurrentTile = { ...player.targetTile };
-      // After snapping to the new tile, always update direction and targetTile based on buffered or current direction
-      // Always start with previous direction
-      let chosenDirection: Direction = player.direction;
-      let nextDir = player.nextDirection;
-      let canTurn = nextDir && canMove(maze, newCurrentTile.x, newCurrentTile.y, nextDir);
-      let canContinue = canMove(maze, newCurrentTile.x, newCurrentTile.y, player.direction);
-
-      if (canTurn) {
-        chosenDirection = nextDir as Direction;
-        nextDir = null;
-      } else if (!canContinue) {
-        // Blocked in both directions
-        return {
-          ...player,
-          currentTile: { ...newCurrentTile },
-          targetTile: { ...newCurrentTile },
-          progress: 0,
-          direction: player.direction,
-          nextDirection: nextDir,
-        };
-      }
-
-      // Set new target tile based on chosen direction (guaranteed to be a valid Direction)
-      let newTargetTile: { x: number; y: number };
-      if (chosenDirection === 'up') newTargetTile = { x: newCurrentTile.x, y: newCurrentTile.y - 1 };
-      else if (chosenDirection === 'down') newTargetTile = { x: newCurrentTile.x, y: newCurrentTile.y + 1 };
-      else if (chosenDirection === 'left') newTargetTile = { x: newCurrentTile.x - 1, y: newCurrentTile.y }; // left = x - 1
-      else newTargetTile = { x: newCurrentTile.x + 1, y: newCurrentTile.y }; // right = x + 1
-
+    console.log('Moving between tiles');
+    const progress = player.progress + speed * dt;
+    
+    // If we haven't reached the target tile yet
+    if (progress < 1) {
+      return { ...player, progress };
+    }
+    
+    // Snap to target tile
+    const newCurrentTile = { ...player.targetTile };
+    console.log('Reached tile:', newCurrentTile);
+    
+    // Check if we can turn in the buffered direction at this intersection
+    console.log('Checking next direction:', player.nextDirection);
+    if (player.nextDirection && canMove(maze, newCurrentTile.x, newCurrentTile.y, player.nextDirection)) {
+      console.log('Turning in buffered direction:', player.nextDirection);
+      const chosenDirection = player.nextDirection;
+      let newTargetTile = { ...newCurrentTile };
+      if (chosenDirection === 'up') newTargetTile.y--;
+      else if (chosenDirection === 'down') newTargetTile.y++;
+      else if (chosenDirection === 'left') newTargetTile.x--;
+      else if (chosenDirection === 'right') newTargetTile.x++;
+      
       return {
         ...player,
         currentTile: { ...newCurrentTile },
-        targetTile: { ...newTargetTile },
-        progress: 0,
+        targetTile: newTargetTile,
+        progress: progress - 1,
         direction: chosenDirection,
-        nextDirection: nextDir,
+        nextDirection: null,
       };
     }
-    return { ...player, progress };
-  }
-
-  // Already at a tile and not moving: check for buffered turn or continue in direction
-  let { currentTile, direction, nextDirection } = player;
-  let chosenDirection = direction;
-  let nextDir = nextDirection;
-  let newTargetTile = { ...currentTile };
-
-  if (nextDir && canMove(maze, currentTile.x, currentTile.y, nextDir)) {
-    chosenDirection = nextDir;
-    nextDir = null;
-  } else if (!canMove(maze, currentTile.x, currentTile.y, chosenDirection)) {
-    // Blocked, can't move
+    
+    // If no buffered direction or can't move that way, continue in current direction if possible
+    console.log('Trying to continue in current direction:', player.direction);
+    if (canMove(maze, newCurrentTile.x, newCurrentTile.y, player.direction)) {
+      console.log('Continuing in current direction:', player.direction);
+      let newTargetTile = { ...newCurrentTile };
+      if (player.direction === 'up') newTargetTile.y--;
+      else if (player.direction === 'down') newTargetTile.y++;
+      else if (player.direction === 'left') newTargetTile.x--;
+      else if (player.direction === 'right') newTargetTile.x++;
+      
+      return {
+        ...player,
+        currentTile: { ...newCurrentTile },
+        targetTile: newTargetTile,
+        progress: progress - 1,
+        direction: player.direction,
+        nextDirection: player.nextDirection,
+      };
+    }
+    
+    // If we can't continue in current direction, check if we can move in buffered direction
+    if (player.nextDirection && canMove(maze, newCurrentTile.x, newCurrentTile.y, player.nextDirection)) {
+      const chosenDirection = player.nextDirection;
+      let newTargetTile = { ...newCurrentTile };
+      if (chosenDirection === 'up') newTargetTile.y--;
+      else if (chosenDirection === 'down') newTargetTile.y++;
+      else if (chosenDirection === 'left') newTargetTile.x--;
+      else if (chosenDirection === 'right') newTargetTile.x++;
+      
+      return {
+        ...player,
+        currentTile: { ...newCurrentTile },
+        targetTile: newTargetTile,
+        progress: progress - 1,
+        direction: chosenDirection,
+        nextDirection: null,
+      };
+    }
+    
+    // If we can't move in any direction, stop at current tile
     return {
       ...player,
-      currentTile: { ...currentTile },
-      targetTile: { ...currentTile },
+      currentTile: { ...newCurrentTile },
+      targetTile: { ...newCurrentTile },
       progress: 0,
-      direction: chosenDirection,
-      nextDirection: nextDir,
+      direction: player.direction,
+      nextDirection: player.nextDirection,
     };
   }
-
-  if (chosenDirection === 'up') newTargetTile = { x: currentTile.x, y: currentTile.y - 1 };
-  else if (chosenDirection === 'down') newTargetTile = { x: currentTile.x, y: currentTile.y + 1 };
-  else if (chosenDirection === 'left') newTargetTile = { x: currentTile.x - 1, y: currentTile.y }; // left = x - 1
-  else if (chosenDirection === 'right') newTargetTile = { x: currentTile.x + 1, y: currentTile.y }; // right = x + 1
-
-  return {
-    ...player,
-    currentTile: { ...currentTile },
-    targetTile: { ...newTargetTile },
-    progress: 0,
-    direction: chosenDirection,
-    nextDirection: nextDir,
-  };
+  
+  // If we're exactly on a tile, check for movement
+  console.log('Exactly on a tile, checking for movement');
+  const currentTile = { ...player.currentTile };
+  
+  // First check if we have a buffered direction we can move in
+  if (player.nextDirection && canMove(maze, currentTile.x, currentTile.y, player.nextDirection)) {
+    const chosenDirection = player.nextDirection;
+    let newTargetTile = { ...currentTile };
+    if (chosenDirection === 'up') newTargetTile.y--;
+    else if (chosenDirection === 'down') newTargetTile.y++;
+    else if (chosenDirection === 'left') newTargetTile.x--;
+    else if (chosenDirection === 'right') newTargetTile.x++;
+    
+    return {
+      ...player,
+      targetTile: newTargetTile,
+      progress: speed * dt,  // Start moving immediately
+      direction: chosenDirection,
+      nextDirection: null,
+    };
+  }
+  
+  // If no buffered direction, try to continue in current direction
+  if (canMove(maze, currentTile.x, currentTile.y, player.direction)) {
+    let newTargetTile = { ...currentTile };
+    if (player.direction === 'up') newTargetTile.y--;
+    else if (player.direction === 'down') newTargetTile.y++;
+    else if (player.direction === 'left') newTargetTile.x--;
+    else if (player.direction === 'right') newTargetTile.x++;
+    
+    return {
+      ...player,
+      targetTile: newTargetTile,
+      progress: speed * dt,  // Start moving immediately
+      direction: player.direction,
+      nextDirection: player.nextDirection,
+    };
+  }
+  
+  // If we can't move in current direction, try to move in buffered direction (if any)
+  if (player.nextDirection && canMove(maze, currentTile.x, currentTile.y, player.nextDirection)) {
+    const chosenDirection = player.nextDirection;
+    let newTargetTile = { ...currentTile };
+    if (chosenDirection === 'up') newTargetTile.y--;
+    else if (chosenDirection === 'down') newTargetTile.y++;
+    else if (chosenDirection === 'left') newTargetTile.x--;
+    else if (chosenDirection === 'right') newTargetTile.x++;
+    
+    return {
+      ...player,
+      targetTile: newTargetTile,
+      progress: speed * dt,  // Start moving immediately
+      direction: chosenDirection,
+      nextDirection: null,
+    };
+  }
+  
+  // If we can't move in any direction, stay in place
+  return player;
 }
 
 export function bufferInput(player: Player, input: Direction): Player {

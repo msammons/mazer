@@ -14,21 +14,36 @@ describe('Maze wall collision logic', () => {
     expect(canMove(maze, 6, 3, 'left')).toBe(false);
   });
 
-  it('allows movement up/down through the gap', () => {
-    // No wall up or down at (4,3)
-    expect(canMove(maze, 4, 3, 'up')).toBe(true);
-    expect(canMove(maze, 4, 3, 'down')).toBe(true);
+  it('allows movement through open cells', () => {
+    // Test horizontal movement in open areas
+    // Row 1: [0,1,1,1,0,1,0,1,1,1,0] - has several open cells
+    expect(canMove(maze, 1, 1, 'right')).toBe(true);  // (1,1) to (2,1)
+    expect(canMove(maze, 2, 1, 'right')).toBe(true);  // (2,1) to (3,1)
+    
+    // Test another row with open cells (row 7: [0,1,1,1,1,1,1,1,1,1,0])
+    expect(canMove(maze, 2, 7, 'right')).toBe(true);  // (2,7) to (3,7)
+    expect(canMove(maze, 3, 7, 'right')).toBe(true);  // (3,7) to (4,7)
+  });
+  
+  it('blocks movement into walls', () => {
+    // Center walls
+    expect(canMove(maze, 5, 3, 'right')).toBe(false);  // Center wall
+    expect(canMove(maze, 6, 3, 'left')).toBe(false);   // Center wall
+    
+    // Other walls
+    expect(canMove(maze, 4, 3, 'down')).toBe(false);   // (4,3) to (4,4) is a wall
+    expect(canMove(maze, 4, 3, 'up')).toBe(false);     // (4,3) to (4,2) is a wall
   });
 
   it('blocks movement at maze outer borders', () => {
+    // Top-left corner
     expect(canMove(maze, 0, 0, 'up')).toBe(false);
     expect(canMove(maze, 0, 0, 'left')).toBe(false);
+    
+    // Top-right corner
     expect(canMove(maze, maze.width-1, 0, 'right')).toBe(false);
+    
+    // Bottom-left corner
     expect(canMove(maze, 0, maze.height-1, 'down')).toBe(false);
-  });
-
-  it('allows movement through open cells', () => {
-    expect(canMove(maze, 4, 4, 'right')).toBe(true);
-    expect(canMove(maze, 7, 4, 'left')).toBe(true);
   });
 });

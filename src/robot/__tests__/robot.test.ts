@@ -27,48 +27,51 @@ describe('Robot Movement', () => {
   });
 
   it('should continue in current direction when possible', () => {
-    // Create a maze with open paths in all directions
+    // Create a maze with open paths to the right
     const maze: Maze = {
       width: 3,
       height: 3,
       grid: [
-        ['wall', 'wall', 'wall'],
+        ['wall', 'empty', 'empty'],
         ['wall', 'empty', 'empty'],
         ['wall', 'wall', 'wall']
       ]
     };
 
-    // Create robot at starting position with initial direction
-    let robot = createRobot(maze, { x: 1, y: 1 });
-    robot.direction = 'up'; // Set initial direction
-    robot.targetTile = { x: 1, y: 1 }; // Start at current position
-
-    // Update robot movement to move up
-    robot = updateRobotMovement(robot, maze, 0.016);
-
-    // Move to the top and update again
-    robot.currentTile = { x: 1, y: 0 };
-    robot.targetTile = { x: 1, y: 0 };
+    // Create robot at starting position with initial direction to the right
+    let robot = createRobot(maze, { x: 1, y: 1 }, 'right');
+    // Reset robot state to ensure clean test
+    robot.currentTile = { x: 1, y: 1 };
+    robot.targetTile = { x: 1, y: 1 };
     robot.progress = 0;
 
-    // Update robot movement
+    // First update should set up the movement to (2,1)
     robot = updateRobotMovement(robot, maze, 0.016);
 
-    // Should continue in up direction
-    expect(robot.direction).toBe('up');
-    expect(robot.targetTile).toEqual({ x: 1, y: 0 });
+    // Should be moving right to (2,1)
+    expect(robot.direction).toBe('right');
+    expect(robot.targetTile).toEqual({ x: 2, y: 1 });
     expect(robot.progress).toBeGreaterThan(0);
 
-    // Move to the top and update again
-    robot.currentTile = { x: 1, y: 0 };
-    robot.targetTile = { x: 1, y: 0 };
+    // Simulate reaching the target tile
+    robot.currentTile = { x: 2, y: 1 };
+    robot.targetTile = { x: 2, y: 1 };
     robot.progress = 0;
 
-    // Update robot movement again
+    // Update robot movement again - should stay at the edge
     robot = updateRobotMovement(robot, maze, 0.016);
-
-    // Should choose right direction since up is blocked
+    
+    // Should stay at the same position since right is blocked
     expect(robot.direction).toBe('right');
+    expect(robot.targetTile).toEqual({ x: 2, y: 1 });
+    expect(robot.progress).toBe(0);
+    
+    // Change direction to up and update
+    robot.direction = 'up';
+    robot = updateRobotMovement(robot, maze, 0.016);
+    
+    // Should move up to (2,0)
+    expect(robot.direction).toBe('up');
     expect(robot.targetTile).toEqual({ x: 2, y: 0 });
     expect(robot.progress).toBeGreaterThan(0);
   });
