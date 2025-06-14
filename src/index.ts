@@ -352,20 +352,21 @@ document.addEventListener('DOMContentLoaded', () => {
   engine.runRenderLoop(() => {
     const currentTime = Date.now();
     const deltaTime = currentTime - lastUpdateTime;
+    lastUpdateTime = currentTime;
 
     // Update robots every frame
-    robots.forEach(robot => {
-      robot = updateRobotMovement(robot, maze, deltaTime / 1000);
+    robots.forEach((robot, i) => {
+      const updated = updateRobotMovement(robot, maze, deltaTime / 1000);
+      robots[i] = updated;
       // Update robot mesh position with interpolation
-      if (robot.mesh) {
-        const { x: currentX, y: currentY } = robot.currentTile;
-        const { x: targetX, y: targetY } = robot.targetTile;
+      if (updated.mesh) {
+        const { x: currentX, y: currentY } = updated.currentTile;
+        const { x: targetX, y: targetY } = updated.targetTile;
         
         // Interpolate between current and target position based on progress
-        const interpolatedX = currentX + (targetX - currentX) * robot.progress;
-        const interpolatedY = currentY + (targetY - currentY) * robot.progress;
-        
-        robot.mesh.position = new Vector3(interpolatedX + 0.5, 0.5, interpolatedY + 0.5);
+        const interpolatedX = currentX + (targetX - currentX) * updated.progress;
+        const interpolatedY = currentY + (targetY - currentY) * updated.progress;
+        updated.mesh.position = new Vector3(interpolatedX + 0.5, 0.5, interpolatedY + 0.5);
       }
     });
 

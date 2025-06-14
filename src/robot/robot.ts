@@ -57,8 +57,11 @@ export function updateRobotMovement(robot: Robot, maze: Maze, deltaTime: number)
 
     // If current direction is valid, keep it
     if (testX >= 0 && testX < width && testY >= 0 && testY < height && maze.grid[testY][testX] !== 'wall') {
-      robot.targetTile = { x: testX, y: testY };
-      return robot;
+      return {
+        ...robot,
+        targetTile: { x: testX, y: testY },
+        progress,
+      };
     }
 
     // If current direction is not valid, try other directions
@@ -75,9 +78,12 @@ export function updateRobotMovement(robot: Robot, maze: Maze, deltaTime: number)
       }
 
       if (testX >= 0 && testX < width && testY >= 0 && testY < height && maze.grid[testY][testX] !== 'wall') {
-        robot.direction = dir;
-        robot.targetTile = { x: testX, y: testY };
-        return robot;
+        return {
+          ...robot,
+          direction: dir,
+          targetTile: { x: testX, y: testY },
+          progress,
+        };
       }
     }
   }
