@@ -27,7 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       if (maze.grid[y][x] === 'spawn') {
-        robots.push(createRobot(maze, { x, y }));
+        const robot = createRobot(maze, { x, y });
+        // Create robot mesh
+        robot.mesh = MeshBuilder.CreateSphere(`robot_${robots.length}`, { diameter: 0.8 }, scene);
+        robot.mesh.position = new Vector3(x + 0.5, 0.5, y + 0.5);
+        robot.mesh.material = createMaterial('robotMat', new Color3(0.2, 0.2, 0.8), scene);
+        robots.push(robot);
       }
     }
   }
@@ -40,7 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
         x = Math.floor(Math.random() * maze.width);
         y = Math.floor(Math.random() * maze.height);
       } while (maze.grid[y][x] === 'wall');
-      robots.push(createRobot(maze, { x, y }));
+      const robot = createRobot(maze, { x, y });
+      // Create robot mesh
+      robot.mesh = MeshBuilder.CreateSphere(`robot_${robots.length}`, { diameter: 0.8 }, scene);
+      robot.mesh.position = new Vector3(x + 0.5, 0.5, y + 0.5);
+      robot.mesh.material = createMaterial('robotMat', new Color3(0.2, 0.2, 0.8), scene);
+      robots.push(robot);
     }
   }
 
@@ -336,23 +346,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const SHARK_SPEED = 4; // tiles/sec
   let lastTime = performance.now();
   let lastUpdateTime = Date.now();
-  const ROBOT_MOVE_INTERVAL = 300; // ms between robot moves
+  const ROBOT_MOVE_INTERVAL = 300; // ms between robot movements
+  let lastRobotUpdate = 0;
 
   engine.runRenderLoop(() => {
     const currentTime = Date.now();
     const deltaTime = currentTime - lastUpdateTime;
 
-    // Update robots every ROBOT_MOVE_INTERVAL ms
-    if (deltaTime >= ROBOT_MOVE_INTERVAL) {
-      robots.forEach(robot => {
-        robot = updateRobotMovement(robot, maze);
-        // Update robot mesh position
-        if (robot.mesh) {
-          robot.mesh.position = new Vector3(robot.currentTile.x + 0.5, 0.5, robot.currentTile.y + 0.5);
-        }
-      });
-      lastUpdateTime = currentTime;
-    }
+    // Update robots every frame
+    robots.forEach(robot => {
+      robot = updateRobotMovement(robot, maze, deltaTime / 1000);
+      // Update robot mesh position with interpolation
+      if (robot.mesh) {
+        const { x: currentX, y: currentY } = robot.currentTile;
+        const { x: targetX, y: targetY } = robot.targetTile;
+        
+        // Interpolate between current and target position based on progress
+        const interpolatedX = currentX + (targetX - currentX) * robot.progress;
+        const interpolatedY = currentY + (targetY - currentY) * robot.progress;
+        
+        robot.mesh.position = new Vector3(interpolatedX + 0.5, 0.5, interpolatedY + 0.5);
+      }
+    });
 
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
