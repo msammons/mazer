@@ -98,7 +98,8 @@ export function updateRobotMovement(robot: Robot, maze: Maze, player: { x: numbe
       }
     }
   } else {
-    progress += speed * dt;
+    // Remain idle without accumulating progress
+    progress = 0;
     if (progress >= 1) {
       // Snap to target tile
       const newCurrentTile = { ...robot.targetTile };
