@@ -6,6 +6,18 @@ module.exports = {
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*@babylonjs.*)/)',
+  ],
+  moduleNameMapper: {
+    '^@babylonjs/(.*)$': '<rootDir>/node_modules/@babylonjs/$1',
+  },
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+      useESM: true,
+    },
+  },
   collectCoverage: true,
   coverageDirectory: 'coverage',
 };

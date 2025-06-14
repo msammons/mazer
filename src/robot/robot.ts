@@ -1,3 +1,15 @@
+import { Maze } from '../maze/maze';
+
+interface Robot {
+  currentTile: { x: number; y: number };
+  targetTile: { x: number; y: number };
+  direction: 'up' | 'down' | 'left' | 'right';
+  progress: number;
+  speed: number;
+  nextDirection?: 'up' | 'down' | 'left' | 'right' | null;
+  mesh?: any;
+}
+
 export function updateRobotMovement(robot: Robot, maze: Maze, deltaTime: number): Robot {
   console.log('updateRobotMovement called with:', { 
     currentTile: robot.currentTile, 

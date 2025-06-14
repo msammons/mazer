@@ -4,7 +4,7 @@ import { createSimpleMaze, MazeCell } from './maze/maze';
 import { createInitialPlayer, getPlayerWorldPosition, Direction, Player } from './player/player';
 import { bufferInput, canMove, isIntersection, updatePlayerMovement, reversePlayerDirection } from './player/movement';
 import { isOpposite } from './player/reverse';
-import { createRobot, updateRobotMovement, Robot } from './robot/robot';
+import { createRobot, updateRobotMovement, Robot, RobotBehavior } from './robot';
 
 document.addEventListener('DOMContentLoaded', () => {
   const canvasElement = document.getElementById('gameCanvas');
@@ -27,9 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
   for (let y = 0; y < maze.height; y++) {
     for (let x = 0; x < maze.width; x++) {
       if (maze.grid[y][x] === 'spawn') {
-        const robot = createRobot(maze, { x, y });
-        // Create robot mesh
-        robot.mesh = MeshBuilder.CreateSphere(`robot_${robots.length}`, { diameter: 0.8 }, scene);
+        const robot = createRobot(
+          robots.length, // id
+          x,             // x position
+          y,             // y position
+          RobotBehavior.PATROL, // behavior
+          scene          // scene
+        );
         robot.mesh.position = new Vector3(x + 0.5, 0.5, y + 0.5);
         robot.mesh.material = createMaterial('robotMat', new Color3(0.2, 0.2, 0.8), scene);
         robots.push(robot);
@@ -45,9 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
         x = Math.floor(Math.random() * maze.width);
         y = Math.floor(Math.random() * maze.height);
       } while (maze.grid[y][x] === 'wall');
-      const robot = createRobot(maze, { x, y });
-      // Create robot mesh
-      robot.mesh = MeshBuilder.CreateSphere(`robot_${robots.length}`, { diameter: 0.8 }, scene);
+      const robot = createRobot(
+        robots.length, // id
+        x,             // x position
+        y,             // y position
+        RobotBehavior.PATROL, // behavior
+        scene          // scene
+      );
+      robot.mesh.position = new Vector3(x + 0.5, 0.5, y + 0.5);
+      robot.mesh.material = createMaterial('robotMat', new Color3(0.2, 0.2, 0.8), scene);
       robot.mesh.position = new Vector3(x + 0.5, 0.5, y + 0.5);
       robot.mesh.material = createMaterial('robotMat', new Color3(0.2, 0.2, 0.8), scene);
       robots.push(robot);
@@ -356,17 +366,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update robots every frame
     robots.forEach((robot, i) => {
-      const updated = updateRobotMovement(robot, maze, deltaTime / 1000);
-      robots[i] = updated;
+      const updatedRobot = updateRobotMovement(
+        robot, 
+        maze, 
+        { x: player.currentTile.x, y: player.currentTile.y },
+        deltaTime,
+        1.0 // speed
+      );
+      robots[i] = updatedRobot;
       // Update robot mesh position with interpolation
-      if (updated.mesh) {
-        const { x: currentX, y: currentY } = updated.currentTile;
-        const { x: targetX, y: targetY } = updated.targetTile;
+      if (updatedRobot.mesh) {
+        const { x: currentX, y: currentY } = updatedRobot.currentTile;
+        const { x: targetX, y: targetY } = updatedRobot.targetTile;
         
         // Interpolate between current and target position based on progress
-        const interpolatedX = currentX + (targetX - currentX) * updated.progress;
-        const interpolatedY = currentY + (targetY - currentY) * updated.progress;
-        updated.mesh.position = new Vector3(interpolatedX + 0.5, 0.5, interpolatedY + 0.5);
+        const interpolatedX = currentX + (targetX - currentX) * updatedRobot.progress;
+        const interpolatedZ = currentY + (targetY - currentY) * updatedRobot.progress;
+        updatedRobot.mesh.position = new Vector3(interpolatedX + 0.5, 0.5, interpolatedZ + 0.5);
       }
     });
 

@@ -193,7 +193,7 @@ export function updateRobotMovement(robot: Robot, maze: Maze, player: { x: numbe
 }
 
 // Helper function to choose next direction based on behavior
-function getNextDirection(robot: Robot, maze: Maze, player: { x: number; y: number }): Direction | null {
+export function getNextDirection(robot: Robot, maze: Maze, player: { x: number; y: number }): Direction | null {
   const { x, y } = robot.currentTile;
   const possibleDirections: Direction[] = [];
 
