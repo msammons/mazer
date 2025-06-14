@@ -13,9 +13,14 @@ All project documentation is located in the [docs](docs/) directory:
 
 ## Getting Started
 
-1. Install dependencies:
+1. Install dependencies. In most environments, run:
    ```bash
    npm install
+   ```
+   If you are running inside a Codex sandbox, first ensure network access is
+   enabled and execute the setup script:
+   ```bash
+   scripts/setup-codex.sh
    ```
 
 2. Start the development server:
