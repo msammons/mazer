@@ -18,9 +18,13 @@ See `requirements.md` for the full design spec.
    git clone <repo-url>
    cd shark-robot-maze
    ```
-2. Install dependencies:
+2. Install dependencies. Normally run:
    ```sh
    npm install
+   ```
+   In the Codex sandbox, ensure networking is enabled and run:
+   ```sh
+   scripts/setup-codex.sh
    ```
 3. Run the development server:
    ```sh
