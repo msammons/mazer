@@ -28,23 +28,9 @@ export function isIntersection(maze: Maze, x: number, y: number): boolean {
   return open > 2;
 }
 
-// Special case: center wall between (5,3) and (6,3)
-const isCenterWall = (x: number, y: number, dir: Direction): boolean => {
-  return (
-    (x === 5 && y === 3 && dir === 'right') ||
-    (x === 6 && y === 3 && dir === 'left')
-  );
-};
-
 export function canMove(maze: Maze, x: number, y: number, dir: Direction): boolean {
   // x, y are integer tile coordinates
   console.log(`canMove called: (${x},${y}) ${dir}`);
-  
-  // Special case for center wall
-  if (isCenterWall(x, y, dir)) {
-    console.log('  Blocked by center wall');
-    return false;
-  }
   
   // Calculate next position
   let nx = x, ny = y;
